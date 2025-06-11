@@ -1,3 +1,7 @@
+# ============================================================================
+# 📄 app/schemas/user.py
+# ============================================================================
+
 """
 User Schemas - Validação de dados de usuário
 ============================================
@@ -7,7 +11,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserBase(BaseModel):
@@ -25,33 +29,10 @@ class UserCreate(UserBase):
     default_frame_count: int = Field(default=8, ge=1, le=32)
     default_frame_size: str = Field(default="64x64")
 
-    @validator('default_frame_size')
+    @field_validator('default_frame_size')
+    @classmethod
     def validate_frame_size(cls, v):
         """Valida formato do frame size"""
-        try:
-            width, height = v.split('x')
-            w, h = int(width), int(height)
-            if not (16 <= w <= 512 and 16 <= h <= 512):
-                raise ValueError("Frame size must be between 16x16 and 512x512")
-            return v
-        except (ValueError, AttributeError):
-            raise ValueError("Frame size must be in format 'WIDTHxHEIGHT'")
-
-
-class UserUpdate(BaseModel):
-    """Schema para atualização de usuário"""
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    display_name: Optional[str] = Field(None, max_length=100)
-    avatar_url: Optional[str] = None
-    preferred_style: Optional[str] = None
-    default_frame_count: Optional[int] = Field(None, ge=1, le=32)
-    default_frame_size: Optional[str] = None
-
-    @validator('default_frame_size')
-    def validate_frame_size(cls, v):
-        """Valida formato do frame size"""
-        if v is None:
-            return v
         try:
             width, height = v.split('x')
             w, h = int(width), int(height)
@@ -87,44 +68,3 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
-
-    @validator('daily_generations', 'max_daily_generations', 'total_generations', pre=True)
-    def convert_string_to_int(cls, v):
-        """Converte strings para int"""
-        if isinstance(v, str):
-            return int(v)
-        return v
-
-
-class UserStats(BaseModel):
-    """Schema para estatísticas do usuário"""
-    total_jobs: int
-    completed_jobs: int
-    failed_jobs: int
-    total_frames_generated: int
-    total_sprite_sheets: int
-    favorite_styles: list[str]
-    avg_processing_time: float
-
-
-class UserPreferences(BaseModel):
-    """Schema para preferências do usuário"""
-    preferred_style: str
-    default_frame_count: int = Field(ge=1, le=32)
-    default_frame_size: str
-    default_animation_type: str = "walk_cycle"
-    default_fps: int = Field(default=12, ge=1, le=60)
-    auto_optimize: bool = True
-    embed_c2pa: bool = True
-
-    @validator('default_frame_size')
-    def validate_frame_size(cls, v):
-        """Valida formato do frame size"""
-        try:
-            width, height = v.split('x')
-            w, h = int(width), int(height)
-            if not (16 <= w <= 512 and 16 <= h <= 512):
-                raise ValueError("Frame size must be between 16x16 and 512x512")
-            return v
-        except (ValueError, AttributeError):
-            raise ValueError("Frame size must be in format 'WIDTHxHEIGHT'")

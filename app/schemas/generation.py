@@ -6,12 +6,12 @@ Generation Schemas - Validação de dados de geração
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class GenerationBase(BaseModel):
     """Base schema para Generation"""
-    generation_type: str = Field(..., regex="^(prompt|image)$")
+    generation_type: str = Field(..., pattern="^(prompt|image)$")
     prompt: Optional[str] = Field(None, max_length=2000)
     negative_prompt: Optional[str] = Field(None, max_length=1000)
 
@@ -30,8 +30,8 @@ class GenerationBase(BaseModel):
     frame_height: int = Field(default=64, ge=16, le=512)
 
     # Background
-    background_type: str = Field(default="transparent", regex="^(transparent|color|pattern)$")
-    background_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    background_type: str = Field(default="transparent", pattern="^(transparent|color|pattern)$")
+    background_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
 
 
 class GenerationCreate(GenerationBase):
@@ -53,19 +53,19 @@ class GenerationCreate(GenerationBase):
     frame_consistency: int = Field(default=80, ge=0, le=100)
     detail_level: int = Field(default=70, ge=0, le=100)
 
-    @validator('prompt')
-    def validate_prompt_for_type(cls, v, values):
+    @field_validator('prompt')
+    @classmethod
+    def validate_prompt_for_type(cls, v, info):
         """Valida prompt baseado no tipo"""
-        generation_type = values.get('generation_type')
-        if generation_type == 'prompt' and not v:
+        if info.data and info.data.get('generation_type') == 'prompt' and not v:
             raise ValueError('Prompt is required for prompt-based generation')
         return v
 
-    @validator('background_color')
-    def validate_background_color(cls, v, values):
+    @field_validator('background_color')
+    @classmethod
+    def validate_background_color(cls, v, info):
         """Valida cor de fundo baseada no tipo"""
-        background_type = values.get('background_type')
-        if background_type == 'color' and not v:
+        if info.data and info.data.get('background_type') == 'color' and not v:
             raise ValueError('Background color is required when background_type is color')
         return v
 

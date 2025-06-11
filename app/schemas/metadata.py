@@ -1,3 +1,7 @@
+# ============================================================================
+# 📄 app/schemas/metadata.py
+# ============================================================================
+
 """
 Metadata Schemas - Validação de dados de metadados
 ==================================================
@@ -7,7 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.metadata import MetadataType
 
@@ -15,7 +19,7 @@ from app.models.metadata import MetadataType
 class MetadataBase(BaseModel):
     """Base schema para Metadata"""
     metadata_type: MetadataType
-    target_entity: str = Field(..., regex="^(job|sprite_sheet|frame|export)$")
+    target_entity: str = Field(..., pattern="^(job|sprite_sheet|frame|export)$")
     target_id: Optional[UUID] = None
 
 
@@ -114,189 +118,10 @@ class MetadataResponse(MetadataBase):
     class Config:
         from_attributes = True
 
-    @validator('processing_time', pre=True)
+    @field_validator('processing_time', mode='before')
+    @classmethod
     def parse_processing_time(cls, v):
         """Convert string to float"""
         if isinstance(v, str) and v:
             return float(v)
         return v or 0.0
-
-    @validator('c2pa_manifest', 'generation_settings', 'animation_info', 'frame_timings',
-               'loop_info', 'quality_scores', 'consistency_metrics', 'optimization_info',
-               'export_settings', 'file_info', 'compression_info', 'platform_info', pre=True)
-    def parse_json_fields(cls, v):
-        """Parse JSON string to dict/list"""
-        if isinstance(v, str):
-            import json
-            try:
-                return json.loads(v)
-            except json.JSONDecodeError:
-                return None
-        return v
-
-
-class C2PAMetadata(BaseModel):
-    """Schema específico para metadados C2PA"""
-    generator: str = "GPT-4o Images"
-    created_with: str = "Sora Pixel Art Generator"
-    provenance: str = "AI Generated Content"
-    model_version: Optional[str] = None
-    timestamp: datetime
-    manifest_signature: Optional[str] = None
-    claim_signature: Optional[str] = None
-
-    # Additional C2PA fields
-    assertion_store: Optional[Dict[str, Any]] = None
-    ingredient_list: Optional[List[Dict[str, Any]]] = None
-    hard_bindings: Optional[List[str]] = None
-    soft_bindings: Optional[List[str]] = None
-
-
-class AnimationMetadata(BaseModel):
-    """Schema para metadados de animação"""
-    frame_count: int = Field(..., ge=1, le=32)
-    fps: int = Field(..., ge=1, le=60)
-    total_duration_ms: int
-    loop: bool = True
-
-    # Frame timing details
-    frame_durations: List[int]  # ms por frame
-    frame_offsets: List[int]  # offset acumulado
-
-    # Animation properties
-    animation_type: str
-    motion_intensity: float = Field(..., ge=0.0, le=1.0)
-    smoothness_score: float = Field(..., ge=0.0, le=1.0)
-
-    # Transition analysis
-    transition_quality: List[float]  # qualidade entre frames consecutivos
-    motion_vectors: Optional[List[Dict[str, float]]] = None
-
-
-class QualityMetadata(BaseModel):
-    """Schema para metadados de qualidade"""
-    overall_score: float = Field(..., ge=0.0, le=1.0)
-
-    # Individual metrics
-    sharpness: float = Field(..., ge=0.0, le=1.0)
-    consistency: float = Field(..., ge=0.0, le=1.0)
-    motion_quality: float = Field(..., ge=0.0, le=1.0)
-    color_harmony: float = Field(..., ge=0.0, le=1.0)
-
-    # Technical metrics
-    compression_efficiency: float = Field(..., ge=0.0, le=1.0)
-    pixel_perfect_score: float = Field(..., ge=0.0, le=1.0)
-    edge_definition: float = Field(..., ge=0.0, le=1.0)
-
-    # Analysis details
-    noise_level: float = Field(..., ge=0.0, le=1.0)
-    artifact_count: int = Field(..., ge=0)
-    color_bleeding: float = Field(..., ge=0.0, le=1.0)
-
-    # Recommendations
-    quality_issues: List[str] = []
-    optimization_suggestions: List[str] = []
-
-
-class ProcessingMetadata(BaseModel):
-    """Schema para metadados de processamento"""
-    processing_time_ms: int
-    memory_usage_mb: float
-    cpu_usage_percent: float
-
-    # Processing steps
-    steps_completed: List[str]
-    step_timings: Dict[str, int]  # ms por step
-
-    # Resource usage
-    peak_memory_mb: float
-    total_cpu_time_ms: int
-    io_operations: int
-
-    # GPT-4o specific
-    api_calls_made: int
-    tokens_used: Optional[int] = None
-    rate_limit_hits: int = 0
-
-    # Error tracking
-    warnings_generated: List[str] = []
-    errors_recovered: List[str] = []
-    retry_attempts: int = 0
-
-
-class ExportMetadata(BaseModel):
-    """Schema para metadados de exportação"""
-    export_format: str
-    export_type: str  # sprite_sheet, individual_frames, etc.
-
-    # File information
-    original_size_bytes: int
-    compressed_size_bytes: int
-    compression_ratio: float
-
-    # Export settings used
-    settings_applied: Dict[str, Any]
-    optimizations_applied: List[str]
-
-    # Quality preservation
-    quality_retained: float = Field(..., ge=0.0, le=1.0)
-    data_loss_percent: float = Field(..., ge=0.0, le=100.0)
-
-    # Performance metrics
-    export_time_ms: int
-    export_throughput_mbps: float
-
-
-class MetadataBundle(BaseModel):
-    """Schema para bundle completo de metadados"""
-    job_id: UUID
-
-    # Different metadata types
-    c2pa: Optional[C2PAMetadata] = None
-    animation: Optional[AnimationMetadata] = None
-    quality: Optional[QualityMetadata] = None
-    processing: Optional[ProcessingMetadata] = None
-    export: Optional[ExportMetadata] = None
-
-    # Summary
-    created_at: datetime
-    bundle_version: str = "1.0"
-    checksum: Optional[str] = None
-
-
-class MetadataExportRequest(BaseModel):
-    """Schema para solicitação de export de metadados"""
-    job_id: UUID
-    include_types: List[MetadataType] = Field(default_factory=lambda: list(MetadataType))
-    format: str = Field(default="json", regex="^(json|xml|yaml)$")
-    include_c2pa_manifest: bool = True
-    include_technical_details: bool = True
-
-
-class MetadataImportRequest(BaseModel):
-    """Schema para importação de metadados"""
-    job_id: UUID
-    metadata_file: str  # path ou content
-    format: str = Field(..., regex="^(json|xml|yaml)$")
-    overwrite_existing: bool = False
-    validate_signatures: bool = True
-
-
-class MetadataSearchRequest(BaseModel):
-    """Schema para busca de metadados"""
-    job_ids: Optional[List[UUID]] = None
-    metadata_types: Optional[List[MetadataType]] = None
-
-    # Search filters
-    generator: Optional[str] = None
-    model_version: Optional[str] = None
-    created_after: Optional[datetime] = None
-    created_before: Optional[datetime] = None
-
-    # Quality filters
-    min_quality_score: Optional[float] = Field(None, ge=0.0, le=1.0)
-    max_processing_time: Optional[int] = None  # ms
-
-    # C2PA filters
-    has_c2pa: Optional[bool] = None
-    provenance: Optional[str] = None

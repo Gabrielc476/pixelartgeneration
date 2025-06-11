@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.job import JobStatus, OutputFormat
 
@@ -76,15 +76,11 @@ class JobResponse(JobBase):
 
 class JobDetailResponse(JobResponse):
     """Schema detalhado para job com relacionamentos"""
-    from .generation import GenerationResponse
-    from .sprite_sheet import SpriteSheetResponse
-    from .frame import FrameResponse
-    from .export import ExportResponse
-
-    generation: Optional[GenerationResponse] = None
-    sprite_sheet: Optional[SpriteSheetResponse] = None
-    frames: List[FrameResponse] = []
-    exports: List[ExportResponse] = []
+    # Imports movidos para dentro da classe para evitar circular imports
+    generation: Optional[dict] = None  # GenerationResponse
+    sprite_sheet: Optional[dict] = None  # SpriteSheetResponse
+    frames: List[dict] = []  # List[FrameResponse]
+    exports: List[dict] = []  # List[ExportResponse]
 
 
 class JobListResponse(BaseModel):
@@ -131,7 +127,7 @@ class JobStatusFilter(BaseModel):
 class JobCreateRequest(BaseModel):
     """Schema completo para criação de job via API"""
     # Generation data embedded
-    generation_type: str = Field(..., regex="^(prompt|image)$")
+    generation_type: str = Field(..., pattern="^(prompt|image)$")
     prompt: Optional[str] = Field(None, max_length=2000)
     upload_id: Optional[UUID] = None
 
@@ -153,18 +149,19 @@ class JobCreateRequest(BaseModel):
     frame_height: int = Field(default=64, ge=16, le=512)
 
     # Background
-    background_type: str = Field(default="transparent", regex="^(transparent|color|pattern)$")
-    background_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    background_type: str = Field(default="transparent", pattern="^(transparent|color|pattern)$")
+    background_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
 
     # Advanced settings
     pixel_perfect: bool = True
     motion_intensity: int = Field(default=50, ge=0, le=100)
 
-    @validator('prompt')
-    def validate_prompt_or_upload(cls, v, values):
+    @field_validator('prompt')
+    @classmethod
+    def validate_prompt_or_upload(cls, v, info):
         """Valida que prompt ou upload_id estão presentes"""
-        generation_type = values.get('generation_type')
-        upload_id = values.get('upload_id')
+        generation_type = info.data.get('generation_type') if info.data else None
+        upload_id = info.data.get('upload_id') if info.data else None
 
         if generation_type == 'prompt' and not v:
             raise ValueError('Prompt is required for prompt-based generation')

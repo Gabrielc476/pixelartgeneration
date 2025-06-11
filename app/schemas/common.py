@@ -19,7 +19,7 @@ class PaginationParams(BaseModel):
     page: int = Field(default=1, ge=1, description="Número da página")
     per_page: int = Field(default=20, ge=1, le=100, description="Itens por página")
     sort_by: Optional[str] = Field(None, description="Campo para ordenação")
-    sort_order: str = Field(default="desc", regex="^(asc|desc)$", description="Ordem de classificação")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$", description="Ordem de classificação")
 
 
 class PaginationMeta(BaseModel):
@@ -133,7 +133,7 @@ class FrameSize(BaseModel):
 
 class ColorInfo(BaseModel):
     """Schema para informações de cor"""
-    hex: str = Field(..., regex="^#[0-9A-Fa-f]{6}$")
+    hex: str = Field(..., pattern="^#[0-9A-Fa-f]{6}$")
     rgb: tuple[int, int, int]
     name: Optional[str] = None
 
@@ -171,7 +171,7 @@ class FilterParams(BaseModel):
 class SortParams(BaseModel):
     """Schema para parâmetros de ordenação"""
     sort_by: str = "created_at"
-    sort_order: str = Field(default="desc", regex="^(asc|desc)$")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$")
 
     def get_sort_expression(self, model_class) -> Any:
         """Retorna expressão de ordenação para SQLAlchemy"""
@@ -256,7 +256,7 @@ class ConfigurationUpdate(BaseModel):
 class SystemStatus(BaseModel):
     """Schema para status do sistema"""
     service: str
-    status: str = Field(..., regex="^(healthy|degraded|unhealthy|maintenance)$")
+    status: str = Field(..., pattern="^(healthy|degraded|unhealthy|maintenance)$")
     last_check: datetime
     response_time_ms: Optional[float] = None
     error_message: Optional[str] = None
