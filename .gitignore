@@ -1,0 +1,55 @@
+# Sora Pixel Art Generator - Backend .gitignore
+
+# Environment & Secrets
+.env
+.env.*
+*.key
+*.pem
+*.cert
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.Python
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+
+# Virtual Environment
+venv/
+env/
+.venv
+
+# Database
+*.sqlite3
+*.db
+database.db
+
+# Storage & Uploads
+storage/
+uploads/
+temp/
+exports/
+cache/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
