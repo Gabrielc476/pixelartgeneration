@@ -26,6 +26,24 @@ from app.api.endpoints.jobs import router as jobs_router
 settings = get_settings()
 logger = structlog.get_logger()
 
+# Create storage directories FIRST (before FastAPI app)
+def create_directories():
+    """Create necessary storage directories"""
+    dirs = [
+        "storage",
+        "storage/uploads",
+        "storage/jobs",
+        "storage/temp",
+        "storage/exports",
+        "storage/cache"
+    ]
+    for d in dirs:
+        Path(d).mkdir(parents=True, exist_ok=True)
+    print(f"📁 Storage directories created: {', '.join(dirs)}")
+
+# Create directories immediately
+create_directories()
+
 # Create FastAPI app
 app = FastAPI(
     title="Sora Pixel Art Generator API",
@@ -78,39 +96,51 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files in development (now that storage directory exists)
+if settings.DEBUG:
+    app.mount("/static", StaticFiles(directory="storage"), name="static")
+
 # Startup
 @app.on_event("startup")
 async def startup():
     """Initialize database on startup"""
     try:
-        await create_tables()
-        logger.info("Database initialized successfully")
+        from app.core.database import init_database, get_database_info
 
-        # Create storage directories
-        create_directories()
-        logger.info("Storage directories created")
+        # Inicializar banco completo
+        await init_database()
+
+        # Obter informações do banco
+        db_info = await get_database_info()
+
+        logger.info("Database initialized successfully", db_info=db_info)
+        print("✅ Database initialized successfully")
+        print(f"   Type: {db_info.get('type', 'unknown')}")
+        print(f"   Tables: {len(db_info.get('tables', []))}")
+
+        if db_info.get('type') == 'postgresql':
+            print("🐘 PostgreSQL connection established")
+        elif db_info.get('type') == 'sqlite':
+            print("📁 SQLite database ready")
 
     except Exception as e:
         logger.error("Failed to initialize application", error=str(e))
+        print(f"❌ Failed to initialize database: {e}")
+
+        # Dar dicas específicas baseadas no erro
+        error_str = str(e).lower()
+        if "connection" in error_str and "postgresql" in error_str:
+            print("\n💡 Dicas para PostgreSQL:")
+            print("   1. Verifique se PostgreSQL está rodando")
+            print("   2. Confirme usuário/senha no .env")
+            print("   3. Certifique-se que o banco 'sora_pixel_art' existe")
+            print("   4. Execute: python setup_postgres.py")
+        elif "no such file" in error_str:
+            print("\n💡 Criando diretório SQLite...")
+            # Para SQLite, criar diretório se não existir
+            Path("storage").mkdir(exist_ok=True)
+
         raise
-
-# Create storage directories
-def create_directories():
-    """Create necessary storage directories"""
-    dirs = [
-        "storage",
-        "storage/uploads",
-        "storage/jobs",
-        "storage/temp",
-        "storage/exports",
-        "storage/cache"
-    ]
-    for d in dirs:
-        Path(d).mkdir(parents=True, exist_ok=True)
-
-# Serve static files in development
-if settings.DEBUG:
-    app.mount("/static", StaticFiles(directory="storage"), name="static")
 
 # Include routers
 app.include_router(
@@ -156,16 +186,35 @@ def root():
     }
 
 @app.get("/health", tags=["health"])
-def health():
+async def health():
     """Health check endpoint"""
+    from app.core.database import check_database_connection, get_database_info
+
+    # Verificar conexão do banco
+    db_connected = await check_database_connection()
+    db_info = await get_database_info() if db_connected else {"error": "connection failed"}
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_connected else "degraded",
         "timestamp": time.time(),
         "version": "1.0.0",
         "services": {
-            "database": "connected",
+            "database": "connected" if db_connected else "disconnected",
+            "database_type": db_info.get("type", "unknown"),
             "storage": "available",
-            "openai": "configured"
+            "openai": "configured" if settings.OPENAI_API_KEY else "not_configured"
+        },
+        "database_info": {
+            "type": db_info.get("type", "unknown"),
+            "tables_count": len(db_info.get("tables", [])),
+            "pool_size": db_info.get("pool_size", "N/A")
+        },
+        "storage_info": {
+            "base_path": str(Path("storage").absolute()),
+            "directories_exist": all(Path(d).exists() for d in [
+                "storage", "storage/uploads", "storage/jobs",
+                "storage/temp", "storage/exports", "storage/cache"
+            ])
         }
     }
 
@@ -253,6 +302,12 @@ if settings.DEBUG:
 
 # Run server
 if __name__ == "__main__":
+    print("🚀 Starting Sora Pixel Art Generator API...")
+    print(f"📁 Storage directory: {Path('storage').absolute()}")
+    print(f"🔧 Debug mode: {settings.DEBUG}")
+    print(f"🌐 CORS origins: {settings.CORS_ORIGINS}")
+    print(f"🔑 OpenAI configured: {'Yes' if settings.OPENAI_API_KEY else 'No (add to .env)'}")
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
