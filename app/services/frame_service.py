@@ -156,7 +156,7 @@ class FrameService:
                 timing_offset=timing_offset,
                 delay_after=0,
                 format="PNG",
-                has_transparency="true",
+                has_transparency=True,
                 color_count=color_count,
                 generated_prompt=used_prompt[:500] if used_prompt else None,
                 generation_seed=None,
@@ -164,8 +164,8 @@ class FrameService:
                 sharpness_score=str(quality_metrics['sharpness']),
                 consistency_score=str(quality_metrics['consistency']),
                 motion_score=str(quality_metrics['motion']),
-                is_optimized="true",
-                c2pa_embedded="true",
+                is_optimized=True,
+                c2pa_embedded=True,
                 generated_with="GPT-4o"
             )
 
@@ -292,7 +292,7 @@ class FrameService:
                         "consistency": float(frame.consistency_score) if frame.consistency_score else None,
                         "motion": float(frame.motion_score) if frame.motion_score else None
                     },
-                    "c2pa_signature": "embedded" if frame.c2pa_embedded == "true" else None
+                    "c2pa_signature": "embedded" if frame.c2pa_embedded else None
                 }
                 metadata["files"].append(frame_info)
 

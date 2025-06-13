@@ -7,7 +7,7 @@ import uuid
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -57,16 +57,16 @@ class SpriteSheet(Base):
 
     # Animation Properties
     fps = Column(Integer, default=12)
-    loop = Column(String(10), default="true")
+    loop = Column(Boolean, default=True)
     total_duration = Column(Integer, nullable=False)  # ms
 
     # File Format
     format = Column(String(10), default="PNG")
-    has_transparency = Column(String(10), default="true")
+    has_transparency = Column(Boolean, default=True)
     color_depth = Column(Integer, default=32)
 
     # Optimization
-    is_optimized = Column(String(10), default="false")
+    is_optimized = Column(Boolean, default=False)
     original_size = Column(Integer, nullable=True)
     compression_ratio = Column(String(10), nullable=True)  # as string for precision
 
@@ -74,7 +74,7 @@ class SpriteSheet(Base):
     frame_positions = Column(Text, nullable=True)  # JSON array com posições x,y
 
     # Metadata
-    c2pa_embedded = Column(String(10), default="true")
+    c2pa_embedded = Column(Boolean, default=True)
     generated_with = Column(String(50), default="GPT-4o")
 
     # Relationships

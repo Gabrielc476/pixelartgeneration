@@ -1,6 +1,3 @@
-# Conteúdo igual ao arquivo "Jobs API Endpoints" já criado
-# Este é o arquivo que será salvo em app/api/endpoints/jobs.py
-
 """
 Jobs API Endpoints
 ==================

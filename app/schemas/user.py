@@ -1,7 +1,3 @@
-# ============================================================================
-# 📄 app/schemas/user.py
-# ============================================================================
-
 """
 User Schemas - Validação de dados de usuário
 ============================================
@@ -33,6 +29,37 @@ class UserCreate(UserBase):
     @classmethod
     def validate_frame_size(cls, v):
         """Valida formato do frame size"""
+        try:
+            width, height = v.split('x')
+            w, h = int(width), int(height)
+            if not (16 <= w <= 512 and 16 <= h <= 512):
+                raise ValueError("Frame size must be between 16x16 and 512x512")
+            return v
+        except (ValueError, AttributeError):
+            raise ValueError("Frame size must be in format 'WIDTHxHEIGHT'")
+
+
+class UserUpdate(BaseModel):
+    """Schema para atualização de usuário"""
+    email: Optional[EmailStr] = None
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    display_name: Optional[str] = Field(None, max_length=100)
+    avatar_url: Optional[str] = None
+
+    # Preferences
+    preferred_style: Optional[str] = None
+    default_frame_count: Optional[int] = Field(None, ge=1, le=32)
+    default_frame_size: Optional[str] = None
+
+    # Settings
+    is_active: Optional[bool] = None
+
+    @field_validator('default_frame_size')
+    @classmethod
+    def validate_frame_size(cls, v):
+        """Valida formato do frame size"""
+        if v is None:
+            return v
         try:
             width, height = v.split('x')
             w, h = int(width), int(height)

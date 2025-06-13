@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, DateTime, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -34,7 +34,7 @@ class User(Base):
 
     # Preferences
     preferred_style = Column(String(50), default="8-bit")
-    default_frame_count = Column(String(10), default="8")
+    default_frame_count = Column(Integer, default=8)
     default_frame_size = Column(String(20), default="64x64")
 
     # Status
@@ -43,9 +43,9 @@ class User(Base):
     is_premium = Column(Boolean, default=False)
 
     # Usage Limits
-    daily_generations = Column(String(10), default="0")
-    max_daily_generations = Column(String(10), default="10")
-    total_generations = Column(String(20), default="0")
+    daily_generations = Column(Integer, default=0)
+    max_daily_generations = Column(Integer, default=10)
+    total_generations = Column(Integer, default=0)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -64,4 +64,4 @@ class User(Base):
         """Verifica se o usuário pode fazer novas gerações"""
         if self.is_premium:
             return True
-        return int(self.daily_generations) < int(self.max_daily_generations)
+        return self.daily_generations < self.max_daily_generations

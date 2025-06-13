@@ -1,7 +1,3 @@
-# ============================================================================
-# 📄 app/schemas/frame.py
-# ============================================================================
-
 """
 Frame Schemas - Validação de dados de frames individuais
 =======================================================
@@ -76,14 +72,6 @@ class FrameResponse(FrameBase):
 
     class Config:
         from_attributes = True
-
-    @field_validator('has_transparency', 'is_optimized', 'c2pa_embedded', mode='before')
-    @classmethod
-    def parse_bool_fields(cls, v):
-        """Convert string to bool"""
-        if isinstance(v, str):
-            return v.lower() == 'true'
-        return bool(v)
 
     @field_validator('sharpness_score', 'consistency_score', 'motion_score', 'compression_ratio', mode='before')
     @classmethod

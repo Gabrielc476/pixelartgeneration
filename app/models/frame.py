@@ -6,7 +6,7 @@ Frame Model - Frames individuais
 import uuid
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -42,7 +42,7 @@ class Frame(Base):
 
     # Visual Properties
     format = Column(String(10), default="PNG")
-    has_transparency = Column(String(10), default="true")
+    has_transparency = Column(Boolean, default=True)
     color_count = Column(Integer, nullable=True)
 
     # Processing Information
@@ -56,12 +56,12 @@ class Frame(Base):
     motion_score = Column(String(10), nullable=True)  # 0.0-1.0 as string
 
     # Optimization
-    is_optimized = Column(String(10), default="false")
+    is_optimized = Column(Boolean, default=False)
     original_size = Column(Integer, nullable=True)
     compression_ratio = Column(String(10), nullable=True)
 
     # Metadata
-    c2pa_embedded = Column(String(10), default="true")
+    c2pa_embedded = Column(Boolean, default=True)
     generated_with = Column(String(50), default="GPT-4o")
     gpt4o_image_id = Column(String(255), nullable=True)  # ID da OpenAI
 

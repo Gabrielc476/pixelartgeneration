@@ -1,7 +1,3 @@
-# ============================================================================
-# 📄 app/schemas/sprite_sheet.py
-# ============================================================================
-
 """
 SpriteSheet Schemas - Validação de dados de sprite sheets
 ========================================================
@@ -91,14 +87,6 @@ class SpriteSheetResponse(SpriteSheetBase):
             except json.JSONDecodeError:
                 return []
         return v or []
-
-    @field_validator('loop', 'has_transparency', 'is_optimized', 'c2pa_embedded', mode='before')
-    @classmethod
-    def parse_bool_fields(cls, v):
-        """Convert string to bool"""
-        if isinstance(v, str):
-            return v.lower() == 'true'
-        return bool(v)
 
     @field_validator('compression_ratio', mode='before')
     @classmethod

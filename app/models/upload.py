@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -45,11 +45,11 @@ class Upload(Base):
     recommended_width = Column(Integer, nullable=True)
     recommended_height = Column(Integer, nullable=True)
     color_count = Column(Integer, nullable=True)
-    has_transparency = Column(String(10), nullable=True)  # true/false as string
+    has_transparency = Column(Boolean, nullable=True)
     dominant_colors = Column(Text, nullable=True)  # JSON array
 
     # Processing Status
-    analysis_completed = Column(String(10), default="false")
+    analysis_completed = Column(Boolean, default=False)
     analysis_error = Column(Text, nullable=True)
 
     # Usage
@@ -75,7 +75,7 @@ class Upload(Base):
     @property
     def is_analyzed(self) -> bool:
         """Verifica se a análise foi concluída"""
-        return self.analysis_completed == "true"
+        return self.analysis_completed
 
     @property
     def aspect_ratio(self) -> float:

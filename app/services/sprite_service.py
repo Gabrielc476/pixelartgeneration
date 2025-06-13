@@ -117,14 +117,14 @@ class SpriteService:
                 frame_width=generation.frame_width,
                 frame_height=generation.frame_height,
                 fps=generation.fps,
-                loop="true" if generation.loop else "false",
+                loop=generation.loop,
                 total_duration=generation.total_duration_ms,
                 format="PNG",
-                has_transparency="true",
+                has_transparency=True,
                 color_depth=32,
-                is_optimized="true",
+                is_optimized=True,
                 frame_positions=json.dumps(frame_positions),
-                c2pa_embedded="true",
+                c2pa_embedded=True,
                 generated_with="GPT-4o"
             )
 
@@ -315,20 +315,20 @@ class SpriteService:
             "animation": {
                 "fps": sprite_sheet.fps,
                 "total_duration": sprite_sheet.total_duration,
-                "loop": sprite_sheet.loop == "true"
+                "loop": sprite_sheet.loop
             },
             "frames": frame_positions,
             "file_info": {
                 "filename": sprite_sheet.filename,
                 "size_bytes": sprite_sheet.file_size,
                 "format": sprite_sheet.format,
-                "has_transparency": sprite_sheet.has_transparency == "true",
+                "has_transparency": sprite_sheet.has_transparency,
                 "color_depth": sprite_sheet.color_depth
             },
             "c2pa_metadata": {
                 "generator": sprite_sheet.generated_with,
                 "created_with": "Sora Pixel Art Generator",
                 "provenance": "AI Generated Content",
-                "embedded": sprite_sheet.c2pa_embedded == "true"
+                "embedded": sprite_sheet.c2pa_embedded
             }
         }

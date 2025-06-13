@@ -1,7 +1,3 @@
-# ============================================================================
-# 📄 app/schemas/upload.py
-# ============================================================================
-
 """
 Upload Schemas - Validação de dados de upload
 =============================================
@@ -73,3 +69,21 @@ class UploadResponse(UploadBase):
 
     class Config:
         from_attributes = True
+
+    @field_validator('analysis_completed', mode='before')
+    @classmethod
+    def parse_analysis_completed(cls, v):
+        """Convert string to bool"""
+        if isinstance(v, str):
+            return v.lower() == 'true'
+        return bool(v)
+
+
+class UploadAnalysisResponse(BaseModel):
+    """Schema para análise de upload"""
+    upload_id: UUID
+    detected_style: Optional[str] = None
+    suggested_frames: Optional[int] = None
+    recommended_size: Optional[dict] = None
+    animation_potential: Optional[float] = None
+    complexity_score: Optional[float] = None
